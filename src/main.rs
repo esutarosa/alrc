@@ -2,7 +2,6 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 mod features;
-
 use features::{analyzer, history, stats, suggester, writer};
 
 #[derive(Parser)]
@@ -15,14 +14,12 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Analyze {
-        /// Specify shell (bash, zsh)
         #[arg(short, long)]
         shell: Option<String>,
     },
     Suggest,
     Add {
         indices: Vec<usize>,
-        /// Shell for which to add (bash, zsh)
         #[arg(short, long)]
         shell: Option<String>,
     },
@@ -43,7 +40,9 @@ fn main() -> Result<()> {
             suggester::interactive_add(&suggestions)?;
         }
         Commands::Add { indices, shell } => {
-            writer::add_aliases(indices, shell)?;
+            let history = history::read_history(shell.clone())?;
+            let suggestions = suggester::suggest(&history);
+            writer::add_aliases(&suggestions, indices, shell)?;
         }
         Commands::Stats => {
             let history = history::read_history(None)?;
